@@ -13,21 +13,51 @@ function rainbow(step: number, numOfSteps = 1000) {
   // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distinguishable vibrant markers in Google Maps and other apps.
   // Adam Cole, 2011-Sept-14
   // HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
-  let r = 0, g = 0, b = 0;
-  let h = step / numOfSteps;
-  let i = ~~(h * 6);
-  let f = h * 6 - i;
-  let q = 1 - f;
-  switch(i % 6){
-      case 0: r = 1; g = f; b = 0; break;
-      case 1: r = q; g = 1; b = 0; break;
-      case 2: r = 0; g = 1; b = f; break;
-      case 3: r = 0; g = q; b = 1; break;
-      case 4: r = f; g = 0; b = 1; break;
-      case 5: r = 1; g = 0; b = q; break;
+  let r = 0,
+    g = 0,
+    b = 0
+  let h = step / numOfSteps
+  let i = ~~(h * 6)
+  let f = h * 6 - i
+  let q = 1 - f
+  switch (i % 6) {
+    case 0:
+      r = 1
+      g = f
+      b = 0
+      break
+    case 1:
+      r = q
+      g = 1
+      b = 0
+      break
+    case 2:
+      r = 0
+      g = 1
+      b = f
+      break
+    case 3:
+      r = 0
+      g = q
+      b = 1
+      break
+    case 4:
+      r = f
+      g = 0
+      b = 1
+      break
+    case 5:
+      r = 1
+      g = 0
+      b = q
+      break
   }
-  var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
-  return (c);
+  var c =
+    '#' +
+    ('00' + (~~(r * 255)).toString(16)).slice(-2) +
+    ('00' + (~~(g * 255)).toString(16)).slice(-2) +
+    ('00' + (~~(b * 255)).toString(16)).slice(-2)
+  return c
 }
 
 const ID = +new Date()
@@ -55,27 +85,30 @@ const connectMembers = (
   }
 }
 
-type Member = Y.Map<string>
+type Member = { username: string; age: number }
+const KEY_MEMBER = 'member'
+type MemberMap = Y.Map<Member>
 type AwarenessProps = {
   yDoc: Y.Doc
   elementIndex?: number
 }
 
 type AwarenessChipProps = {
-  color: string;
+  color: string
 }
-const AwarenessChip = ({color}: AwarenessChipProps) => {
-  return <span
-  style={{
-    background: color,
-    border: '2px solid #313131',
-    borderRadius: '50%',
-    display: 'inline-block',
-    margin: '0 2px',
-    minHeight: '8px',
-    minWidth: '8px',
-  }}
-  ></span>
+const AwarenessChip = ({ color }: AwarenessChipProps) => {
+  return (
+    <span
+      style={{
+        background: color,
+        border: '2px solid #313131',
+        borderRadius: '50%',
+        display: 'inline-block',
+        margin: '0 2px',
+        minHeight: '8px',
+        minWidth: '8px',
+      }}></span>
+  )
 }
 const Awareness = ({ yDoc, elementIndex }: AwarenessProps) => {
   const [awarenessData] = useYAwareness<AwarenessState>(yDoc)
@@ -91,30 +124,28 @@ const Awareness = ({ yDoc, elementIndex }: AwarenessProps) => {
   return (
     <>
       {colors.map((color, index) => {
-        return (
-          <AwarenessChip
-          color={color}
-            key={index} />
-        )
+        return <AwarenessChip color={color} key={index} />
       })}
     </>
   )
 }
 type EditMemberProps = {
   yDoc: Y.Doc
-  yMember: Member
+  yMember: MemberMap
   handleDone: () => void
   index: number
 }
 const EditMember = ({ yDoc, yMember, index, handleDone }: EditMemberProps) => {
-  const { set, data } = useYMap<string | number, { username: string }>(yMember)
+  const { set, data } = useYMap<Member, Record<'member', Member>>(yMember)
   const [, setAwarenessData] = useYAwareness<AwarenessState>(yDoc)
+
   useEffect(() => {
     setAwarenessData({ elementIndex: index })
     return () => {
       setAwarenessData({ elementIndex: null })
     }
   }, [index, setAwarenessData])
+
   return (
     <form
       style={{ display: 'inline-block' }}
@@ -127,19 +158,20 @@ const EditMember = ({ yDoc, yMember, index, handleDone }: EditMemberProps) => {
         id="Member"
         name="Member"
         autoFocus
-        value={data.username}
+        value={`${data.member.username}`}
         style={{ width: 230, display: 'inline-block', marginRight: 8 }}
         onChange={({ target }) => {
-          set('username', `${target.value}`)
+          set(KEY_MEMBER, { username: `${target.value}`, age: 77 })
         }}
       />
+      <span>{data.member.age}</span>
       <button type="submit">done</button>
     </form>
   )
 }
 
 type MemberDetailProps = React.PropsWithChildren<{
-  member: Member
+  member: MemberMap
   onClick: () => void
 }>
 const MemberDetail = ({ member, onClick, children }: MemberDetailProps) => {
@@ -147,24 +179,28 @@ const MemberDetail = ({ member, onClick, children }: MemberDetailProps) => {
   return (
     <li onClick={onClick}>
       {children}
-      {get('username')}
+      {get(KEY_MEMBER)?.username}
     </li>
   )
 }
 const Members = () => {
-  const yDoc = useYDoc('root', connectMembers)
+  const yDoc = useYDoc('root-felipe', connectMembers)
   const [editionIndex, setEditionIndex] = useState<number>(-1)
-  const { data, delete: deleteItem } = useYArray<Member>(
+  const { data, delete: deleteItem } = useYArray<MemberMap>(
     yDoc.getArray('members')
   )
   const [awarenessData] = useYAwareness<AwarenessState>(yDoc)
-  const me = awarenessData.find(({ID: userId}) => userId === ID)
+  const me = awarenessData.find(({ ID: userId }) => userId === ID)
 
   return (
     <>
-     {me && <div style={{color: me.color, textAlign: 'right'}}><AwarenessChip color={me.color} /> you are connected</div> }
+      {me && (
+        <div style={{ color: me.color, textAlign: 'right' }}>
+          <AwarenessChip color={me.color} /> you are connected
+        </div>
+      )}
       <ul>
-        {data.map((yMember: Member, index: number) => {
+        {data.map((yMember: MemberMap, index: number) => {
           if (editionIndex === index)
             return (
               <li key={index}>
@@ -174,7 +210,7 @@ const Members = () => {
                   yMember={yMember}
                   index={index}
                   handleDone={() => {
-                    if (yMember.get('username') === '') {
+                    if (yMember.get(KEY_MEMBER)?.username === '') {
                       deleteItem(editionIndex)
                     }
                     setEditionIndex(-1)
@@ -203,16 +239,17 @@ const Members = () => {
 }
 
 const AddMember = () => {
-  const yDoc = useYDoc('root', connectMembers)
-  const { push, data } = useYArray<Member>(yDoc.getArray('members'))
+  const yDoc = useYDoc('root-felipe', connectMembers)
+  const { push, data } = useYArray<MemberMap>(yDoc.getArray('members'))
 
   return (
     <button
       className="primary"
       onClick={() => {
-        const newMember = new Y.Map<string>()
-        console.log('JohnDoe #' + data.length)
-        newMember.set('username', 'JohnDoe #' + data.length)
+        const newMember = new Y.Map<Member>()
+        const username = 'Opa #' + data.length
+        console.log(username)
+        newMember.set(KEY_MEMBER, { username, age: 12 })
         push([newMember])
       }}>
       New Member

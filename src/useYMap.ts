@@ -5,9 +5,12 @@ import { useMemo } from 'react'
 
 type MapFunctions<T> = Pick<
   Y.Map<T>,
-  'set' | 'get' | 'has' | 'delete' | 'forEach' | 'entries' | 'values' | 'keys'
+  'set' | 'has' | 'delete' | 'forEach' | 'entries' | 'values' | 'keys'
 >
-type MapWrapper<T, U extends Record<string, T>> = { data: U } & MapFunctions<T>
+type MapWrapper<T, U extends Record<string, T>> = {
+  data: U
+  get: (key: string) => T | undefined
+} & MapFunctions<T>
 
 const useYMap = <T, U extends Record<string, T>>(
   yMap: Y.Map<T>
